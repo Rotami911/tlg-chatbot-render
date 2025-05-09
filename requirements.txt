@@ -7,4 +7,5 @@ openai
 telethon
 coloredlogs
 pytz
+tiktoken
 

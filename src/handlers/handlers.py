@@ -43,6 +43,21 @@ async def security_check(event: NewMessage) -> None:
 
 
 @register(NewMessage(pattern="/search"))
+@register(NewMessage(pattern="/пошук"))
+async def ddg_search_handler(event: NewMessage) -> None:
+    client = event.client
+    chat_id = event.chat_id
+    await client(SetTypingRequest(peer=chat_id, action=SendMessageTypingAction()))
+    response = await ddg_search(event)
+    try:
+        await client.send_message(chat_id, f"__Результати пошуку:__\n\n{response}")
+        logging.debug(f"Sent /пошук to {chat_id}")
+    except Exception as e:
+        logging.error(f"Error in /пошук: {e}")
+        await event.reply("❌ Помилка при пошуку")
+    await client.action(chat_id, "cancel")
+    raise StopPropagation
+
 async def search_handler(event: NewMessage) -> None:
     client = event.client
     chat_id = event.chat_id

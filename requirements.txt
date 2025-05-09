@@ -4,3 +4,4 @@ uvicorn
 fastapi
 google-generativeai
 openai
+telethon

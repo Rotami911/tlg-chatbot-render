@@ -8,4 +8,5 @@ telethon
 coloredlogs
 pytz
 tiktoken
+duckduckgo-search
 

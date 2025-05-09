@@ -9,7 +9,8 @@ from telethon.tl.functions.messages import SetTypingRequest
 from telethon.tl.types import SendMessageTypingAction
 
 import src.utils.utils
-from src.functions.additional_func import bash, search
+from src.functions.additional_func import bash, search, ddg_search
+
 from src.functions.chat_func import (
     get_bard_response,
     get_bing_response,

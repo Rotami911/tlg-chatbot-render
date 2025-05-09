@@ -114,3 +114,16 @@ async def search(event: NewMessage) -> str:
     except Exception as e:
         logging.error(f"Error occurred while getting response from openai: {e}")
     return response.content
+    import duckduckgo_search
+
+async def ddg_search(event):
+    query = event.raw_text.split(" ", maxsplit=1)[1] if " " in event.raw_text else ""
+    if not query:
+        return "❌ Напишіть що саме потрібно знайти після команди."
+
+    try:
+        # Здійснюємо пошук
+        results = duckduckgo_search.ddg(query, max_results=5)
+        if not results:
+            return "❌ Нічого не знайдено."
+

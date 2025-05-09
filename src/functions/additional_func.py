@@ -4,7 +4,8 @@ import json
 import logging
 
 import openai
-from duckduckgo_search import ddg
+from duckduckgo_search import DDGS
+
 from src.utils import (
     LOG_PATH,
     VIETNAMESE_WORDS,

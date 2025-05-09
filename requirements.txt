@@ -6,3 +6,4 @@ google-generativeai
 openai
 telethon
 coloredlogs
+pytz

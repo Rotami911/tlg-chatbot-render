@@ -3,3 +3,4 @@ python-dotenv
 uvicorn
 fastapi
 google-generativeai
+openai

@@ -5,3 +5,4 @@ fastapi
 google-generativeai
 openai
 telethon
+coloredlogs

@@ -11,4 +11,5 @@ tiktoken
 duckduckgo-search
 unidecode
 Pillow
+bardapi
 

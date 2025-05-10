@@ -19,7 +19,7 @@ from unidecode import unidecode
 
 
 
-        async def bash(event: NewMessage) -> str:
+async def bash(event: NewMessage) -> str:
     try:
         cmd = event.text.split(" ", maxsplit=1)[1]
         process = await asyncio.create_subprocess_shell(

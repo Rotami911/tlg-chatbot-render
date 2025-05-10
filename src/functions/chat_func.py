@@ -10,7 +10,6 @@ import openai
 import PIL.Image
 from bardapi import Bard
 from EdgeGPT.EdgeUtils import Query
-from openai.error import APIConnectionError
 from telethon.events import NewMessage
 
 import src.utils
@@ -59,8 +58,8 @@ async def start_and_check(
             file_num, filename, prompt = await read_existing_conversation(chat_id)
             prompt.append({"role": "user", "content": message})
             num_tokens = num_tokens_from_messages(prompt)
-            if num_tokens > MAX_TOKEN:  # Cant summarize old chats
-                logging.warn(
+            if num_tokens > MAX_TOKEN:
+                logging.warning(
                     f"Number of tokens exceeds {MAX_TOKEN} limit, creating new chat"
                 )
                 file_num += 1
@@ -71,8 +70,8 @@ async def start_and_check(
                 with open(f"{LOG_PATH}chats/session/{chat_id}.json", "w") as f:
                     json.dump(data, f)
                 continue
-            elif num_tokens > MAX_TOKEN - 17:  # Summarize old chats
-                logging.warn(
+            elif num_tokens > MAX_TOKEN - 17:
+                logging.warning(
                     f"Number of tokens nearly exceeds {MAX_TOKEN} limit, summarizing old chats"
                 )
                 file_num += 1
@@ -105,7 +104,7 @@ def get_openai_response(prompt: Prompt, filename: str) -> str:
                 json.dump(data, f, indent=4)
             logging.debug("Received response from openai")
             trial = 5
-        except APIConnectionError:
+        except openai.error.APIConnectionError as e:
             responses = "🔌 Render and OpenAI hate each other"
             logging.error(f"API Connection failed: {e}")
             trial += 1
@@ -130,7 +129,6 @@ def get_bard_response(input_text: str) -> str:
             responses = Bard(token_from_browser=True).get_answer(input_text)
             logging.debug("Received response from bard by token_from_browser")
         except:
-            # Send an API request and get a response.
             responses = bardapi.core.Bard(timeout=timeout).get_answer(input_text)[
                 "content"
             ]
@@ -147,22 +145,10 @@ def get_gemini_response(input_text: str) -> str:
         response = model.generate_content(
             input_text,
             safety_settings=[
-                {
-                    "category": "HARM_CATEGORY_HARASSMENT",
-                    "threshold": "BLOCK_NONE",
-                },
-                {
-                    "category": "HARM_CATEGORY_HATE_SPEECH",
-                    "threshold": "BLOCK_NONE",
-                },
-                {
-                    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                    "threshold": "BLOCK_NONE",
-                },
-                {
-                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    "threshold": "BLOCK_NONE",
-                },
+                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
             ],
         )
         responses = response.text
@@ -178,27 +164,12 @@ def get_gemini_vison_response(input_text: str, img_path: str) -> str:
         try:
             model = genai.GenerativeModel("gemini-1.5-flash")
             response = model.generate_content(
-                [
-                    input_text,
-                    img,
-                ],
+                [input_text, img],
                 safety_settings=[
-                    {
-                        "category": "HARM_CATEGORY_HARASSMENT",
-                        "threshold": "BLOCK_NONE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_HATE_SPEECH",
-                        "threshold": "BLOCK_NONE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                        "threshold": "BLOCK_NONE",
-                    },
-                    {
-                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                        "threshold": "BLOCK_NONE",
-                    },
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
                 ],
             )
             response.resolve()
@@ -217,21 +188,15 @@ def get_bing_response(input_text):
         COOKIE_PATH = os.getenv("COOKIE_PATH")
         q = Query(
             input_text,
-            style="creative",  # or: 'balanced', 'precise'
+            style="creative",
             cookie_file=COOKIE_PATH,
         )
         responses = []
-        source_lst = []
+        suggest_lst = []
         messages = q.response["item"]["messages"]
         for response_dict in messages:
             if response_dict["author"] == "bot" and "text" in response_dict:
                 responses.append(response_dict["text"])
-                if "sourceAttributions" in response_dict:
-                    source_lst = [
-                        x["seeMoreUrl"] for x in response_dict["sourceAttributions"]
-                    ]
-
-        # TODO: replace sending suggest list by sources
         suggest_lst = [
             x["text"]
             for x in response_dict["item"]["messages"][1]["suggestedResponses"]

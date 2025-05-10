@@ -13,4 +13,5 @@ unidecode
 Pillow
 bardapi
 EdgeGPT
+log2d
 

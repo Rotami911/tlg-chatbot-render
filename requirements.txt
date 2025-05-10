@@ -10,4 +10,5 @@ pytz
 tiktoken
 duckduckgo-search
 unidecode
+bardapi
 

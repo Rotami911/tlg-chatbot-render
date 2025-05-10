@@ -4,7 +4,7 @@ import json
 import logging
 
 import openai
-from duckduckgo_search import DDGS
+from duckduckgo_search import ddg
 
 from src.utils import (
     LOG_PATH,
@@ -15,9 +15,6 @@ from src.utils import (
 from telethon.events import NewMessage
 from unidecode import unidecode
 
-# Functions for bot operation
-
-
 
 async def bash(event: NewMessage) -> str:
     try:
@@ -27,14 +24,14 @@ async def bash(event: NewMessage) -> str:
         )
         stdout, stderr = await process.communicate()
         e = stderr.decode()
+        o = stdout.decode()
+
         if not e:
             e = "No Error"
-        o = stdout.decode()
         if not o:
             o = "**TIP**: \n`If you want to see the results of your code, I suggest printing them to stdout.`"
         else:
-            _o = [f"`{x}`" for x in o.split("\n")]
-            o = "\n".join(_o)
+            o = "\n".join([f"`{line}`" for line in o.splitlines()])
 
         OUTPUT = (
             f"**QUERY:**\n`{cmd}`\n__PID:__ `{process.pid}`"
@@ -58,32 +55,6 @@ async def bash(event: NewMessage) -> str:
     except Exception as ex:
         logging.error(f"bash error: {ex}")
         return "❌ Сталася помилка при виконанні команди."
-
-        if not o:
-            o = "**TIP**: \n`If you want to see the results of your code, I suggest printing them to stdout.`"
-        else:
-            _o = [f"`  {x}`" for x in o.split("\n")]
-            o = "\n".join(_o)
-        OUTPUT = (
-            f"**     QUERY:**\n  __Command:__` {cmd}` \n  __PID:__` {process.pid}`"
-            f"\n**ERROR:** \n`  {e}`"
-            f"\n**OUTPUT:**\n{o}"
-        )
-        if len(OUTPUT) > 4095:
-            with io.BytesIO(str.encode(OUTPUT)) as out_file:
-                out_file.name = "exec.text"
-                await event.client.send_file(
-                    event.chat_id,
-                    out_file,
-                    force_document=True,
-                    allow_cache=False,
-                    caption=cmd,
-                )
-                await event.delete()
-        logging.debug("Bash initiated")
-    except Exception as e:
-        logging.error(f"Error occurred: {e}")
-    return OUTPUT
 
 
 async def search(event: NewMessage) -> str:
@@ -143,17 +114,21 @@ async def search(event: NewMessage) -> str:
         logging.debug("Received response from openai")
     except Exception as e:
         logging.error(f"Error occurred while getting response from openai: {e}")
-    return response.content
-    import duckduckgo_search
+        return "❌ Виникла помилка під час генерації відповіді."
 
-async def ddg_search(event):
+    return response.content
+
+
+async def ddg_search(event: NewMessage) -> str:
     query = event.raw_text.split(" ", maxsplit=1)[1] if " " in event.raw_text else ""
     if not query:
         return "❌ Напишіть що саме потрібно знайти після команди."
 
     try:
-        # Здійснюємо пошук
-        results = duckduckgo_search.ddg(query, max_results=5)
+        results = ddg(query, max_results=5)
         if not results:
             return "❌ Нічого не знайдено."
-
+        return "\n\n".join([f"- {r['title']}\n{r['href']}" for r in results])
+    except Exception as e:
+        logging.error(f"ddg_search error: {e}")
+        return "❌ Виникла помилка при виконанні пошуку."

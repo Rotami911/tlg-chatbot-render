@@ -18,7 +18,8 @@ from unidecode import unidecode
 # Functions for bot operation
 
 
-async def bash(event: NewMessage) -> str:
+
+        async def bash(event: NewMessage) -> str:
     try:
         cmd = event.text.split(" ", maxsplit=1)[1]
         process = await asyncio.create_subprocess_shell(
@@ -29,6 +30,35 @@ async def bash(event: NewMessage) -> str:
         if not e:
             e = "No Error"
         o = stdout.decode()
+        if not o:
+            o = "**TIP**: \n`If you want to see the results of your code, I suggest printing them to stdout.`"
+        else:
+            _o = [f"`{x}`" for x in o.split("\n")]
+            o = "\n".join(_o)
+
+        OUTPUT = (
+            f"**QUERY:**\n`{cmd}`\n__PID:__ `{process.pid}`"
+            f"\n**ERROR:**\n`{e}`"
+            f"\n**OUTPUT:**\n{o}"
+        )
+
+        if len(OUTPUT) > 4095:
+            with io.BytesIO(str.encode(OUTPUT)) as out_file:
+                out_file.name = "exec.text"
+                await event.client.send_file(
+                    event.chat_id,
+                    out_file,
+                    force_document=True,
+                    allow_cache=False,
+                    caption=cmd,
+                )
+                return ""
+        return OUTPUT
+
+    except Exception as ex:
+        logging.error(f"bash error: {ex}")
+        return "❌ Сталася помилка при виконанні команди."
+
         if not o:
             o = "**TIP**: \n`If you want to see the results of your code, I suggest printing them to stdout.`"
         else:

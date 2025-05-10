@@ -12,4 +12,5 @@ duckduckgo-search
 unidecode
 Pillow
 bardapi
+EdgeGPT
 
